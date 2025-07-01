@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.anonymous.mytodoapp"
     },
     "web": {
       "bundler": "metro",
@@ -25,6 +26,7 @@
     },
     "plugins": [
       "expo-router",
+      "./plugin.config.js",
       [
         "expo-splash-screen",
         {

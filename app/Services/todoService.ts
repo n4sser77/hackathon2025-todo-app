@@ -1,62 +1,50 @@
 // Simple in-memory todo persistence service
 // Usage: import { getTodos, addTodo, completeTodo, getCompleted } from './Services/todoService';
+import { TodoRepository } from "@/repository/TodoRepository";
+import "react-native-get-random-values"; // Ensure UUIDs work in React Native
+import { v4 as uuidv4 } from "uuid";
 
-let todos: string[] = [];
-let completed: string[] = [];
+// All functions are now async and use the Couchbase Lite repository
 
-export function getTodos() {
-  return todos;
+
+
+export async function getTodos() {
+  return await TodoRepository.getInstance().getTodos();
 }
 
-export function addTodo(todo: string) {
-  todos.push(todo);
+export async function addTodo(text: string) {
+  const id = uuidv4();
+  await TodoRepository.getInstance().addTodo({ id, text, completed: false });
 }
 
-export function completeTodo(index: number) {
-  const todo = todos[index];
-  if (todo !== undefined) {
-    completed.push(todo);
-    todos.splice(index, 1);
-  }
+export async function completeTodo(id: string) {
+  await TodoRepository.getInstance().updateTodo(id, { completed: true });
 }
 
-export function getCompleted() {
-  return completed;
+export async function getCompleted() {
+  return await TodoRepository.getInstance().getCompleted();
 }
 
-export function clearAll() {
-  todos = [];
-  completed = [];
+export async function clearAll() {
+  // Not implemented: would require iterating and deleting all todos and completed
 }
 
-export function updateTodo(index: number, newValue: string) {
-  if (todos[index] !== undefined) {
-    todos[index] = newValue;
-  }
+export async function updateTodo(id: string, newValue: string) {
+  await TodoRepository.getInstance().updateTodo(id, { text: newValue });
 }
 
-export function deleteTodo(index: number) {
-  if (todos[index] !== undefined) {
-    todos.splice(index, 1);
-  }
+export async function deleteTodo(id: string) {
+  await TodoRepository.getInstance().deleteTodo(id);
 }
 
-export function updateCompleted(index: number, newValue: string) {
-  if (completed[index] !== undefined) {
-    completed[index] = newValue;
-  }
+export async function updateCompleted(id: string, newValue: string) {
+  await TodoRepository.getInstance().updateTodo(id, { text: newValue });
 }
 
-export function deleteCompleted(index: number) {
-  if (completed[index] !== undefined) {
-    completed.splice(index, 1);
-  }
+export async function deleteCompleted(id: string) {
+  await TodoRepository.getInstance().deleteTodo(id);
 }
 
-export function moveBackToTodos(index: number) {
-  const todo = completed[index];
-  if (todo !== undefined) {
-    todos.push(todo);
-    completed.splice(index, 1);
-  }
+export async function moveBackToTodos(id: string) {
+  await TodoRepository.getInstance().updateTodo(id, { completed: false });
 }
