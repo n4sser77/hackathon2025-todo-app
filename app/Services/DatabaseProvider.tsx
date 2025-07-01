@@ -4,7 +4,7 @@ import {
    DatabaseConfiguration,
    FileSystem,
 } from "cbl-reactnative";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useRef, useState } from "react";
 import * as replicatorService from "./replicatorService";
 
 // --- DatabaseService Singleton ---
@@ -33,6 +33,7 @@ export class DatabaseService {
     config.setDirectory(directoryPath);
     this.database = new Database("todos", config);
     await this.database.open();
+    
   }
 }
 
@@ -54,6 +55,11 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({
   const [dbService] = useState(() => DatabaseService.getInstance());
   const [ready, setReady] = useState(false);
 
+  // Use refs to persist replicator and tokens across renders/effects
+  const replicatorRef = useRef<any>(null);
+  const tokenRef = useRef<any>(null);
+  const docTokenRef = useRef<any>(null);
+
   useEffect(() => {
     dbService
       .initializeDatabase()
@@ -61,25 +67,24 @@ export const DatabaseProvider: React.FC<{ children: React.ReactNode }> = ({
       .catch((e) => console.error(e));
   }, [dbService]);
 
-  // Start replication automatically when database is ready
   useEffect(() => {
-    let replicator: any = null;
-    let token: any = null;
     if (ready && dbService.database) {
       replicatorService
         .startReplication(dbService.database)
         .then((result) => {
-          replicator = result.replicator;
-          token = result.token;
+          replicatorRef.current = result.replicator;
+          tokenRef.current = result.token;
+          docTokenRef.current = result.docToken;
         })
         .catch((err) => {
           console.error("Failed to start replication:", err);
         });
     }
-    // Optionally clean up on unmount
     return () => {
-      if (replicator && token) {
-        replicatorService.stopReplication(replicator, token).catch(() => {});
+      if (replicatorRef.current && tokenRef.current) {
+        replicatorService
+          .stopReplication(replicatorRef.current, tokenRef.current, docTokenRef.current)
+          .catch(() => {});
       }
     };
   }, [ready, dbService.database]);

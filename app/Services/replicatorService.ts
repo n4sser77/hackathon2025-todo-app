@@ -33,9 +33,9 @@ export async function startReplication(database: Database) {
   // For Capella: ensure we do NOT accept only self-signed certs (default is false)
 
   // (Optional) Advanced config
-  // config.setHeartbeat(150);
-  // config.setMaxAttempts(20);
-  // config.setMaxAttemptWaitTime(600);
+   // config.setHeartbeat(150);
+   // config.setMaxAttempts(20);
+   // config.setMaxAttemptWaitTime(600);
 
   // 3. Create and start the replicator
   const replicator = await Replicator.create(config);
@@ -50,14 +50,37 @@ export async function startReplication(database: Database) {
     // You can use ReplicatorActivityLevel.{STOPPED, OFFLINE, CONNECTING, IDLE, BUSY}
   });
 
+  // --- Document Change Listener ---
+  // This listener will be called for every document that is pushed or pulled by the replicator.
+  // It helps you debug which documents are actually being synced (received or sent).
+  // You can use this to update UI, trigger notifications, or just log for troubleshooting.
+  const docToken = await replicator.addDocumentChangeListener((replication) => {
+    console.log(`Replication type :: ${replication.isPush ? "Push" : "Pull"}`);
+    for (const document of replication.documents) {
+      if (document.error === undefined) {
+        console.log(`Doc ID :: ${document.id}`);
+        if (document.flags && document.flags.includes('DELETED')) {
+          console.log("Successfully replicated a deleted document");
+        }
+      } else {
+        console.error("Error replicating document:", document.error);
+      }
+    }
+  });
+  // --- End Document Change Listener ---
+
   await replicator.start(false); // false = don't reset checkpoint
 
-  // 5. Return replicator and token for cleanup
-  return { replicator, token };
+  // 5. Return replicator and tokens for cleanup (now includes docToken)
+  return { replicator, token, docToken };
 }
 
 // To stop and clean up:
-export async function stopReplication(replicator: Replicator, token: any) {
+export async function stopReplication(replicator: Replicator, token: any, docToken?: any) {
   await replicator.removeChangeListener(token);
+  // Remove document change listener if present
+  if (docToken) {
+    await replicator.removeChangeListener(docToken);
+  }
   await replicator.stop();
 }

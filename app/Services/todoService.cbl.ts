@@ -49,7 +49,9 @@ export async function addTodo(database: Database, text: string) {
     const id = uuidv4();
     const doc = new MutableDocument(id);
     doc.setString("text", text);
+    doc.setString("type", "todo"); // Optional: set a type for the document
     doc.setBoolean("completed", false);
+    
     await collection.save(doc);
   } catch (err) {
     console.error("addTodo error:", err);
