@@ -29,6 +29,7 @@ export async function startReplication(database: Database) {
   config.setAuthenticator(auth);
   config.setReplicatorType(ReplicatorType.PUSH_AND_PULL); // or PULL, PUSH
   config.setContinuous(true); // true for live sync, false for one-shot
+  config.setAcceptOnlySelfSignedCerts(false); // For Capella: ensure we do NOT accept only self-signed certs (default is false)
   // For Capella: ensure we do NOT accept only self-signed certs (default is false)
 
   // (Optional) Advanced config
