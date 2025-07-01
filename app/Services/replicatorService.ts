@@ -1,11 +1,11 @@
 import { SYNC_GATEWAY_URL, SYNC_PASSWORD, SYNC_USERNAME } from "@env";
 import {
-   BasicAuthenticator,
-   Database,
-   Replicator,
-   ReplicatorConfiguration,
-   ReplicatorType,
-   URLEndpoint,
+  BasicAuthenticator,
+  Database,
+  Replicator,
+  ReplicatorConfiguration,
+  ReplicatorType,
+  URLEndpoint,
 } from "cbl-reactnative";
 
 console.log("SYNC_GATEWAY_URL:", SYNC_GATEWAY_URL);
@@ -23,6 +23,7 @@ export async function startReplication(database: Database) {
 
   // 2. Create the replicator config
   const config = new ReplicatorConfiguration(target);
+
   // Add the default collection
   const collection = await database.defaultCollection();
   config.addCollection(collection);
@@ -33,9 +34,9 @@ export async function startReplication(database: Database) {
   // For Capella: ensure we do NOT accept only self-signed certs (default is false)
 
   // (Optional) Advanced config
-   // config.setHeartbeat(150);
-   // config.setMaxAttempts(20);
-   // config.setMaxAttemptWaitTime(600);
+  // config.setHeartbeat(150);
+  // config.setMaxAttempts(20);
+  // config.setMaxAttemptWaitTime(600);
 
   // 3. Create and start the replicator
   const replicator = await Replicator.create(config);
@@ -59,7 +60,7 @@ export async function startReplication(database: Database) {
     for (const document of replication.documents) {
       if (document.error === undefined) {
         console.log(`Doc ID :: ${document.id}`);
-        if (document.flags && document.flags.includes('DELETED')) {
+        if (document.flags && document.flags.includes("DELETED")) {
           console.log("Successfully replicated a deleted document");
         }
       } else {
@@ -69,14 +70,18 @@ export async function startReplication(database: Database) {
   });
   // --- End Document Change Listener ---
 
-  await replicator.start(false); // false = don't reset checkpoint
+  await replicator.start(true); // false = don't reset checkpoint
 
   // 5. Return replicator and tokens for cleanup (now includes docToken)
   return { replicator, token, docToken };
 }
 
 // To stop and clean up:
-export async function stopReplication(replicator: Replicator, token: any, docToken?: any) {
+export async function stopReplication(
+  replicator: Replicator,
+  token: any,
+  docToken?: any
+) {
   await replicator.removeChangeListener(token);
   // Remove document change listener if present
   if (docToken) {
